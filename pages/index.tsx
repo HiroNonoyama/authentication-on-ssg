@@ -1,9 +1,47 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import type { NextPage } from "next";
+import Head from "next/head";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import styles from "../styles/Home.module.css";
 
-const Home: NextPage = () => {
+export const getStaticProps = async () => {
+  return {
+    props: {
+      message: "Hello kitty",
+    },
+    revalidate: 10,
+  };
+};
+
+const Home: NextPage<{ message: string }> = (props) => {
+  const [authenticating, setAuthenticating] = useState(false);
+  const [user, setUser] = useState();
+  const [error, setError] = useState();
+  useEffect(() => {
+    const request = async () => {
+      setAuthenticating(true);
+      const res = await fetch("/api/signin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "test@gmail.com",
+          password: "11111111",
+        }),
+      });
+      const resBody = await res.json();
+      if (res.status === 200) {
+        setUser(resBody);
+      } else {
+        setError(resBody);
+      }
+      setAuthenticating(false);
+    };
+    setTimeout(() => {
+      request();
+    }, 1000);
+  }, []);
   return (
     <div className={styles.container}>
       <Head>
@@ -17,8 +55,13 @@ const Home: NextPage = () => {
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
 
+        <h2>{props.message}</h2>
+        {authenticating && <h2>signining in</h2>}
+        {user && <h2>Userがあるから表示されるデータ</h2>}
+        {error && <h2>{JSON.stringify(error)}</h2>}
+
         <p className={styles.description}>
-          Get started by editing{' '}
+          Get started by editing{" "}
           <code className={styles.code}>pages/index.tsx</code>
         </p>
 
@@ -59,14 +102,14 @@ const Home: NextPage = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
+          Powered by{" "}
           <span className={styles.logo}>
             <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
           </span>
         </a>
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
